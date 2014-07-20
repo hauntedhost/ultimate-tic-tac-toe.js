@@ -2,7 +2,7 @@ var TicTacToe = function(selector) {
   this.$board = $(selector);
   this.moves = [];
   this.wins = { x: [], o: [] }
-
+  this.gameOver = false;
   this.init();
 }
 
@@ -107,6 +107,10 @@ TicTacToe.prototype.applyBigCellWin = function($cell, player) {
 }
 
 TicTacToe.prototype.isValidMove = function($smallCell) {
+  if (this.gameOver) {
+    return false;
+  }
+
   // if this is the first move, it's valid
   if (this.moves.length === 0) {
     return true;
@@ -165,6 +169,12 @@ TicTacToe.prototype.applyMove = function($smallCell) {
   }
 }
 
+TicTacToe.prototype.applyGameOver = function() {
+  this.gameOver = true;
+  var $board = this.$board.find('table[data-board]');
+  this.applyBigCellWin($board);
+}
+
 TicTacToe.prototype.coordsFromSmallCell = function($smallCell) {
   var smallCellNum = $smallCell.data('small-cell');
   var $bigCell = $smallCell.closest('[data-big-cell]');
@@ -187,36 +197,6 @@ TicTacToe.prototype.currentBoard = function() {
   return board;
 }
 
-// TicTacToe.prototype.hasDiagonalWin = function() {
-//
-// }
-
-TicTacToe.prototype.hasDiagonalWin = function($cell, player) {
-  // diagonal backslash
-  var $backSlash = $cell.find('td[data-small-cell="0"],\
-                               td[data-small-cell="4"],\
-                               td[data-small-cell="8"]');
-
-  var $takenBackSlashCells = $backSlash.closest('[data-mark="' + player + '"]');
-
-  if ($takenBackSlashCells.length === 3) {
-    return true;
-  }
-
-  // diagonal forward slash
-  var $forwardSlash = $cell.find('td[data-small-cell="2"],\
-                                  td[data-small-cell="4"],\
-                                  td[data-small-cell="6"]');
-
-  var $takenForwardSlashCells = $forwardSlash.closest('[data-mark="' +
-                                                         player + '"]');
-
-  if ($takenForwardSlashCells.length === 3) {
-    return true;
-  }
-
-  return false;
-}
 
 TicTacToe.prototype.cellType = function($cell) {
   var cellType;
@@ -230,6 +210,39 @@ TicTacToe.prototype.cellType = function($cell) {
   return cellType;
 }
 
+TicTacToe.prototype.hasDiagonalWin = function($cell, player) {
+  var cellSize;
+  if (this.cellType($cell) === 'board') {
+    cellSize = 'big';
+  } else {
+    cellSize = 'small'
+  };
+
+  // backward diagonal slash
+  var backSelector = 'td[data-' + cellSize + '-cell="0"][data-mark="' + player + '"],\
+                      td[data-' + cellSize + '-cell="4"][data-mark="' + player + '"],\
+                      td[data-' + cellSize + '-cell="8"][data-mark="' + player + '"]'
+
+  var $cells = $cell.find(backSelector);
+
+  if ($cells.length === 3) {
+    return true;
+  }
+
+  // forward diagonal slash
+  var fwdSelector = 'td[data-' + cellSize + '-cell="2"][data-mark="' + player + '"],\
+                     td[data-' + cellSize + '-cell="4"][data-mark="' + player + '"],\
+                     td[data-' + cellSize + '-cell="6"][data-mark="' + player + '"]'
+
+  var $cells = $cell.find(fwdSelector);
+
+  if ($cells.length === 3) {
+    return true;
+  }
+
+  return false;
+}
+
 TicTacToe.prototype.hasStraightWin = function($cell, player) {
   // check rows and cols for winner
   for (var j = 0; j < 3; j++) {
@@ -240,8 +253,6 @@ TicTacToe.prototype.hasStraightWin = function($cell, player) {
     }
     rowSelector += '[data-mark="' + player + '"]';
     var $rows = $cell.find(rowSelector);
-
-    //var $takenRowCells = $row.find('[data-mark="' + player + '"]');
 
     if ($rows.length === 3) {
       return true;
@@ -255,10 +266,6 @@ TicTacToe.prototype.hasStraightWin = function($cell, player) {
     colSelector += '[data-mark="' + player + '"]';
     var $cols = $cell.find(colSelector);
 
-    // var $col = $cell.find(colSelector);
-    // var $takenColCells = $col.closest('[data-mark="' + player + '"]');
-
-    // if ($takenColCells.length === 3) {
     if ($cols.length === 3) {
       return true;
     }
@@ -299,11 +306,11 @@ TicTacToe.prototype.isSmallWinner = function(bigCellNum, players) {
       this.applyBigCellWin($bigCell, player);
       this.wins[player].push(bigCellNum);
 
-      // TODO: check for grandWinner
+      // check for grandWinner
       var grandWin = this.hasWin($('table[data-board]'), player);
       if (grandWin) {
-        console.log('BOOOOOM');
-        this.gameOver = true;
+        console.log('grand win for player', player);
+        this.applyGameOver();
       }
     }
   }
