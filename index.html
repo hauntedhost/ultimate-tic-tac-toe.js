@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>tic tac toe</title>
+
+  <style type="text/css">
+    body {
+      font-family: monospace;
+      font-size: 10px;
+    }
+
+    td {
+      padding: 10px;
+      border: 1px solid black;
+      box-sizing: border-box;
+      -webkit-box-sizing: border-box;
+      text-align: center;
+    }
+
+    td.selected {
+      border: 2px solid black;
+      padding: 8px;
+    }
+
+    tr:first-child td.selected {
+      border: 2px solid black;
+      padding-top: 10px
+    }
+
+    tr:last-child td.selected {
+      border: 2px solid black;
+    }
+
+    tr td:first-child {
+      padding-left: 10px
+    }
+
+    tr td:nth-child(2) {
+      padding-left: 10px;
+    }
+
+    tr td:last-child {
+      padding-right: 10px
+    }
+
+  </style>
+</head>
+<body>
+
+  <div data-board></div>
+
+  <script src="jquery.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
