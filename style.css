@@ -1,0 +1,33 @@
+body {
+  font-family: monospace;
+  font-size: 10px;
+}
+
+table {
+  border: 2px solid transparent;
+}
+
+table.won {
+  border: 2px solid black;
+}
+
+td.clickable:hover {
+  cursor: pointer;
+}
+
+td {
+  padding: 10px;
+  border: 1px solid black;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  text-align: center;
+}
+
+td.selected {
+  border: 2px solid black;
+  padding: 9px;
+}
+
+td.last {
+  border: 2px solid red;
+}
