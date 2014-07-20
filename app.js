@@ -24,16 +24,45 @@ TicTacToe.prototype.addEventHandlers = function() {
   });
 }
 
-TicTacToe.prototype.emptyBoard = function(board) {
-  // [[0, 1, 2, 3 ...], [0, 1, 2, 3]]
-  var board = [];
-  for (var i = 0; i < 9; i++) {
-    board[i] = [];
-    for (var j = 0; j < 9; j++) {
-      board[i].push(null);
-    }
+TicTacToe.prototype.applyMove = function($smallCell) {
+  var coords = this.coordsFromSmallCell($smallCell);
+  var mark = this.currentPlayerMark();
+
+  if (this.isValidMove($smallCell)) {
+    this.moves.push(coords);
+
+    this.$board.find('td').removeClass('last');
+    $smallCell.addClass('selected last');
+    $smallCell.attr('data-mark', mark);
+    $smallCell.html(mark);
+
+    this.hasSmallWin(coords[0]);
   }
-  return board;
+}
+
+TicTacToe.prototype.applyWin = function($cell, player) {
+  $cell.attr('data-mark', player);
+
+  $cell.addClass('won');
+  $cell.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd \
+              oanimationend animationend', function() {
+    $(this).removeClass('animated pulse');
+  });
+  $cell.addClass('animated pulse');
+}
+
+TicTacToe.prototype.applyGameOver = function() {
+  this.gameOver = true;
+  var $board = this.$board.find('table[data-board]');
+  this.applyWin($board);
+}
+
+TicTacToe.prototype.shakeCell = function($cell) {
+  $cell.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd \
+              oanimationend animationend', function() {
+    $(this).removeClass('animated shake');
+  });
+  $cell.addClass('animated shake');
 }
 
 TicTacToe.prototype.boardTemplate = function(bigCellNum) {
@@ -78,32 +107,29 @@ TicTacToe.prototype.lastPlayerMark = function() {
   return this.isEven(this.moves.length) ? 'o' : 'x';
 }
 
-TicTacToe.prototype.isTaken = function($smallCell) {
-  return !!$smallCell.data('mark');
-}
-
 TicTacToe.prototype.winsContain = function(cellNum) {
   return (this.wins.x.indexOf(cellNum) > -1 ||
       this.wins.o.indexOf(cellNum) > -1)
 }
 
-TicTacToe.prototype.shakeCell = function($cell) {
-  $cell.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd \
-              oanimationend animationend', function() {
-    $(this).removeClass('animated shake');
-  });
-  $cell.addClass('animated shake');
+TicTacToe.prototype.cellType = function($cell) {
+  var cellType;
+
+  if (!(typeof $cell.data('board') ===  'undefined')) {
+    cellType = 'board';
+  } else if (!(typeof $cell.data('big-cell') ===  'undefined')) {
+    cellType = 'big-cell';
+  }
+
+  return cellType;
 }
 
-TicTacToe.prototype.applyBigCellWin = function($cell, player) {
-  $cell.attr('data-mark', player);
+TicTacToe.prototype.coordsFromSmallCell = function($smallCell) {
+  var smallCellNum = $smallCell.data('small-cell');
+  var $bigCell = $smallCell.closest('[data-big-cell]');
+  var bigCellNum = $bigCell.data('big-cell');
 
-  $cell.addClass('won');
-  $cell.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd \
-              oanimationend animationend', function() {
-    $(this).removeClass('animated pulse');
-  });
-  $cell.addClass('animated pulse');
+  return [bigCellNum, smallCellNum];
 }
 
 TicTacToe.prototype.isValidMove = function($smallCell) {
@@ -153,61 +179,8 @@ TicTacToe.prototype.isValidMove = function($smallCell) {
   }
 }
 
-TicTacToe.prototype.applyMove = function($smallCell) {
-  var coords = this.coordsFromSmallCell($smallCell);
-  var mark = this.currentPlayerMark();
-
-  if (this.isValidMove($smallCell)) {
-    this.moves.push(coords);
-
-    this.$board.find('td').removeClass('last');
-    $smallCell.addClass('selected last');
-    $smallCell.attr('data-mark', mark);
-    $smallCell.html(mark);
-
-    this.isSmallWinner(coords[0]);
-  }
-}
-
-TicTacToe.prototype.applyGameOver = function() {
-  this.gameOver = true;
-  var $board = this.$board.find('table[data-board]');
-  this.applyBigCellWin($board);
-}
-
-TicTacToe.prototype.coordsFromSmallCell = function($smallCell) {
-  var smallCellNum = $smallCell.data('small-cell');
-  var $bigCell = $smallCell.closest('[data-big-cell]');
-  var bigCellNum = $bigCell.data('big-cell');
-
-  return [bigCellNum, smallCellNum];
-}
-
-
-TicTacToe.prototype.currentBoard = function() {
-  var board = this.emptyBoard();
-
-  for (var i = 0; i < this.moves.length; i++) {
-    var move = this.moves[i];
-    var outer = move[0];
-    var inner = move[1];
-    var mark = this.isEven(i) ? 'x' : 'o';
-    board[outer][inner] = mark;
-  }
-  return board;
-}
-
-
-TicTacToe.prototype.cellType = function($cell) {
-  var cellType;
-
-  if (!(typeof $cell.data('board') ===  'undefined')) {
-    cellType = 'board';
-  } else if (!(typeof $cell.data('big-cell') ===  'undefined')) {
-    cellType = 'big-cell';
-  }
-
-  return cellType;
+TicTacToe.prototype.isTaken = function($smallCell) {
+  return !!$smallCell.data('mark');
 }
 
 TicTacToe.prototype.hasDiagonalWin = function($cell, player) {
@@ -290,11 +263,11 @@ TicTacToe.prototype.hasWin = function($cell, player) {
   return win;
 }
 
-TicTacToe.prototype.isSmallWinner = function(bigCellNum, players) {
+TicTacToe.prototype.hasSmallWin = function(bigCellNum, players) {
   var $bigCell = $('[data-big-cell="' + bigCellNum + '"]');
 
   // by default, simply check if last player won
-  // but support passing multiple players for thorough check
+  // but support passing multiple players for complete check
   var players = players || [this.lastPlayerMark()];
 
   // iterate through players
@@ -303,7 +276,7 @@ TicTacToe.prototype.isSmallWinner = function(bigCellNum, players) {
     var win = this.hasWin($bigCell, player);
 
     if (win) {
-      this.applyBigCellWin($bigCell, player);
+      this.applyWin($bigCell, player);
       this.wins[player].push(bigCellNum);
 
       // check for grandWinner
@@ -315,43 +288,3 @@ TicTacToe.prototype.isSmallWinner = function(bigCellNum, players) {
     }
   }
 }
-
-// var doSetTimeout = function($cell, mark, timeout) {
-//   setTimeout(function() {
-//     applyMove($cell, mark);
-//   }, timeout);
-// }
-//
-// var applyMoves = function(moves) {
-//   for (var i = 0; i < moves.length; i++) {
-//     var outer = moves[i][0];
-//     var inner = moves[i][1];
-//     var mark = isEven(i) ? 'x' : 'o';
-//     var $cell = $('table[data-level="outer"] td[data-cell="' +
-//       outer + '"] table[data-level="inner"] td[data-cell="' + inner + '"]');
-//
-//     var timeout = 500 + (i * 100);
-//     doSetTimeout($cell, mark, timeout);
-//   }
-// }
-
-// var sampleMoves = [
-//   [4, 4],
-//   [4, 2],
-//   [2, 0],
-//   [0, 5],
-//   [5, 4],
-//   [4, 1],
-//   [1, 1],
-//   [1, 6],
-//   [6, 4],
-//   [4, 0],
-//   [0, 6],
-//   [0, 3],
-//   [0, 0],
-//   [2, 1],
-//   [2, 4],
-//   [2, 7]
-// ];
-//
-// applyMoves(sampleMoves);
