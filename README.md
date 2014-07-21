@@ -1,5 +1,5 @@
-Ultimate Tic
-============
+Ultimate Tic Tac Toe
+====================
 
 Demo
 ----
